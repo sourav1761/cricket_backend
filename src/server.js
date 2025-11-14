@@ -9,7 +9,6 @@ import contactRoutes from "./routes/contactRoutes.js"; //
 import path from "path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
-import uploadRoutes from "./routes/uploadRoutes.js";
 
 
 dotenv.config();
@@ -31,7 +30,6 @@ app.use("/api", routes);
 app.use("/api/players", playerRoutes);
 app.use("/api/sponsors", sponsorRoutes);
 app.use("/api/contact", contactRoutes); 
-app.use("/api/upload", uploadRoutes)
 
 // Start server
 const PORT = process.env.PORT || 5000;

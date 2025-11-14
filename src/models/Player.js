@@ -14,8 +14,7 @@ const playerSchema = new mongoose.Schema(
     state: { type: String, required: true },
     city: { type: String, required: true },
     trialsCity: { type: String, required: true },
-    profilePhoto: { type: String },
-    aadharCard: { type: String },
+    aadharNumber: { type: String, required: true },
   },
   { timestamps: true }
 );

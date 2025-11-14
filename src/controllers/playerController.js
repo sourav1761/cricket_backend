@@ -19,6 +19,7 @@ export const registerPlayer = async (req, res) => {
       state,
       city,
       trialsCity,
+      aadharNumber,
     } = req.body;
 
     // Check if already registered
@@ -45,9 +46,11 @@ export const registerPlayer = async (req, res) => {
       state,
       city,
       trialsCity,
+      aadharNumber
     });
 
     // Send Golden Ticket Email
+// Send Golden Ticket Email
 await sendEmail(
   email,
   "ACPL Cricket League Trials 2025 - Official Registration Confirmation",
@@ -125,7 +128,7 @@ await sendEmail(
               letter-spacing: 2px;
               text-transform: uppercase;
             ">
-              OFFICIAL ENTRY PASS
+              ACPL Ticket
             </h2>
             <p style="margin: 5px 0 0 0; color: #7a5c00; font-size: 14px;">
               ACPL Cricket League Trials 2025
