@@ -31,7 +31,7 @@ export const createOrder = async (req, res) => {
           customer_name: customerName,
         },
         order_meta: {
-          return_url: `https://acplsports.in/registration?order_id=${orderId}`
+          return_url: `http://localhost:3000/registration?order_id=${orderId}`
         }
       },
       {
