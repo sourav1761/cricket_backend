@@ -1,6 +1,7 @@
 // routes/payment.js
 import express from "express";
-import { createOrder, verifyPaymentAndRegister } from "../controllers/payment.controller.js";
+import { createOrder, verifyPaymentAndRegister } from "../controllers/paymentController";
+
 
 const router = express.Router();
 
