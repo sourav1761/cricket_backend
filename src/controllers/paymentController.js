@@ -1,6 +1,5 @@
 // controllers/payment.controller.js
 import axios from "axios";
-import dayjs from "dayjs";
 import Player from "../models/Player.js";
 import { sendEmail } from "../config/email.js";
 import { appId, secretKey, baseUrl } from "../config/cashfree.js";
@@ -32,7 +31,7 @@ export const createOrder = async (req, res) => {
           customer_name: customerName,
         },
         order_meta: {
-          return_url: `https://your-site.com/payment-status?order_id=${orderId}`
+          return_url: `https://acplsports.in/registration?order_id=${orderId}`
         }
       },
       {
