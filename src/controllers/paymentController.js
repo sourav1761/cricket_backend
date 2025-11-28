@@ -57,6 +57,7 @@ export const createOrder = async (req, res) => {
 // ----------------------
 export const verifyPaymentAndRegister = async (req, res) => {
   const { orderId } = req.params;
+  console.log(orderId)
 
   try {
     // Fetch order status
