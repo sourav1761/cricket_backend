@@ -6,6 +6,7 @@ import routes from "./routes/index.js";
 import playerRoutes from "./routes/playerRoutes.js";
 import sponsorRoutes from "./routes/sponsorRoutes.js";
 import contactRoutes from "./routes/contactRoutes.js"; //
+import paymentRoutes from "./routes/paymentRoutes.js"
 import path from "path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
@@ -30,6 +31,7 @@ app.use("/api", routes);
 app.use("/api/players", playerRoutes);
 app.use("/api/sponsors", sponsorRoutes);
 app.use("/api/contact", contactRoutes); 
+app.use("/api/payment", paymentRoutes)
 
 // Start server
 const PORT = process.env.PORT || 5000;
