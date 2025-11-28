@@ -1,9 +1,7 @@
-// config/cashfree.config.js
-require('dotenv').config();
+import dotenv from "dotenv";
+dotenv.config();
 
-module.exports = {
-  appId: process.env.CASHFREE_APP_ID,
-  secretKey: process.env.CASHFREE_SECRET_KEY,
-  isProduction: false, // true for live
-  baseUrl: 'https://api.cashfree.com/pg', // change for live
-};
+export const appId = process.env.CASHFREE_APP_ID;
+export const secretKey = process.env.CASHFREE_SECRET_KEY;
+export const isProduction = false;
+export const baseUrl = "https://api.cashfree.com/pg";
