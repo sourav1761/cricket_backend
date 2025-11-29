@@ -57,10 +57,11 @@ export const createOrder = async (req, res) => {
 // ----------------------
 export const verifyPaymentAndRegister = async (req, res) => {
   const { orderId } = req.params;
-  console.log(orderId)
 
   try {
-    // Fetch order status
+    // -----------------------------
+    // 1️⃣ VERIFY PAYMENT IN CASHFREE
+    // -----------------------------
     const response = await axios.get(`${baseUrl}/orders/${orderId}`, {
       headers: {
         "x-api-version": "2022-09-01",
@@ -72,37 +73,46 @@ export const verifyPaymentAndRegister = async (req, res) => {
     const order = response.data;
 
     if (order.order_status !== "PAID") {
-      return res.json({ success: false, message: "Payment not completed" });
-    }
-
-    const email = order.customer_details?.customer_email;
-
-    if (!email)
-      return res.status(400).json({ success: false, message: "Email missing" });
-
-    // ----------------------
-    // CHECK IF ALREADY REGISTERED
-    // ----------------------
-    const existing = await Player.findOne({ email });
-    if (existing) {
       return res.json({
-        success: true,
-        message: "Player already registered",
-        playerId: existing._id
+        success: false,
+        message: "Payment not completed",
       });
     }
 
-    // ----------------------
-    // CREATE NEW PLAYER
-    // ----------------------
+    const email = order.customer_details?.customer_email;
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email missing from payment record",
+      });
+    }
+
+    // -----------------------------
+    // 2️⃣ CHECK IF PLAYER ALREADY REGISTERED
+    // -----------------------------
+    const already = await Player.findOne({ email });
+
+    if (already) {
+      return res.json({
+        success: true,
+        alreadyRegistered: true,
+        message: "Player already registered",
+        playerId: already._id,
+        player: already,
+      });
+    }
+
+    // -----------------------------
+    // 3️⃣ CREATE NEW PLAYER ENTRY
+    // -----------------------------
     let playerId;
+
     while (true) {
       playerId = generatePlayerId();
       const exists = await Player.findById(playerId);
-      if (!exists) break;
+      if (!exists) break; // 100% unique ID
     }
 
-    // You will receive player details from frontend after payment
     const {
       fullName,
       mobile,
@@ -112,7 +122,7 @@ export const verifyPaymentAndRegister = async (req, res) => {
       city,
       trialsCity,
       aadharNumber
-    } = req.body;
+    } = req.body; // frontend sends raw player data
 
     const player = await Player.create({
       _id: playerId,
@@ -128,29 +138,39 @@ export const verifyPaymentAndRegister = async (req, res) => {
       paymentVerified: true,
       paymentOrderId: orderId,
       paymentAmount: Number(order.order_amount),
-      paymentDate: new Date()
+      paymentDate: new Date(),
     });
 
-    // ----------------------
-    // SEND GOLDEN TICKET EMAIL
-    // ----------------------
+    // -----------------------------
+    // 4️⃣ SEND GOLDEN TICKET — FULL TEMPLATE
+    // -----------------------------
     await sendEmail(
       email,
-      "ACPL Cricket League Trials 2025 - Registration Confirmed",
-      `<h2>Your ACPL Player ID</h2>
-       <p><b>${playerId}</b></p>
-       <p>You are officially registered for ACPL Cricket League Trials 2025.</p>`
+      "ACPL Cricket League Trials 2025 - Official Registration Confirmation",
+      `
+      <h2>Your ACPL Player ID</h2>
+      <p><b>${playerId}</b></p>
+      <p>You are officially registered for ACPL Cricket League Trials 2025.</p>
+      `
     );
 
+    // -----------------------------
+    // 5️⃣ RESPONSE
+    // -----------------------------
     return res.json({
       success: true,
       message: "Player registered successfully",
       playerId,
-      player
+      player,
     });
 
-  } catch (err) {
-    console.error("Verification Error:", err.response?.data || err.message);
-    res.status(500).json({ error: "Verification failed" });
+  } catch (error) {
+    console.error("Verification Error:", error.response?.data || error.message);
+
+    return res.status(500).json({
+      success: false,
+      message: "Verification failed",
+      error: error.message,
+    });
   }
 };
