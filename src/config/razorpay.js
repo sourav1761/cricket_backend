@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-export const razorpayKeyId = process.env.RAZORPAY_KEY_ID;
-export const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET;
+export const razorpayKeyId = 'rzp_test_Rx0unQJhR6kLZO';
+export const razorpayKeySecret = 'gfDc2VTtfVxKSb1j1rXHZ7Nk'
