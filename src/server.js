@@ -21,14 +21,30 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Middleware
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://acplsports.in",
+  "https://www.acplsports.in",
+];
+
 app.use(
   cors({
-    origin: "http://localhost:3000, http://acplsports.in, www.acplsports.in",
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("CORS not allowed"));
+      }
+    },
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   })
 );
+
+// 👇 VERY IMPORTANT
+app.options("*", cors());
+
 
 app.use(express.json());
 
