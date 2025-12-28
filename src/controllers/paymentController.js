@@ -8,144 +8,144 @@ import { appId, secretKey, baseUrl } from "../config/cashfree.js";
 // Generate Custom ACPL Player ID
 // ----------------------
 function generatePlayerId() {
-    const random = Math.random().toString(36).substring(2, 10).toUpperCase();
-    return `ACPL-${random}`;
+  const random = Math.random().toString(36).substring(2, 10).toUpperCase();
+  return `ACPL-${random}`;
 }
 
 // ----------------------
 // Create Cashfree Order
 // ----------------------
 export const createOrder = async (req, res) => {
-    try {
-        const { orderId, orderAmount, customerName, customerPhone, customerEmail } = req.body;
+  try {
+    const { orderId, orderAmount, customerName, customerPhone, customerEmail } = req.body;
 
-        const response = await axios.post(`${baseUrl}/orders`,
-            {
-                order_id: orderId,
-                order_amount: orderAmount,
-                order_currency: "INR",
-                customer_details: {
-                    customer_id: customerPhone,
-                    customer_email: customerEmail,
-                    customer_phone: customerPhone,
-                    customer_name: customerName,
-                },
-                order_meta: {
-                    return_url: `https://acplsports.in/registration?order_id=${orderId}`
-                }
-            },
-            {
-                headers: {
-                    "x-api-version": "2022-09-01",
-                    "x-client-id": appId,
-                    "x-client-secret": secretKey,
-                    "Content-Type": "application/json",
-                },
-            }
-        );
+    const response = await axios.post(`${baseUrl}/orders`,
+      {
+        order_id: orderId,
+        order_amount: orderAmount,
+        order_currency: "INR",
+        customer_details: {
+          customer_id: customerPhone,
+          customer_email: customerEmail,
+          customer_phone: customerPhone,
+          customer_name: customerName,
+        },
+        order_meta: {
+          return_url: `https://acplsports.in/registration?order_id=${orderId}`
+        }
+      },
+      {
+        headers: {
+          "x-api-version": "2022-09-01",
+          "x-client-id": appId,
+          "x-client-secret": secretKey,
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
-        res.json(response.data);
+    res.json(response.data);
 
-    } catch (err) {
-        console.error("Cashfree Order Error:", err.response?.data || err.message);
-        res.status(500).json({ error: "Order creation failed" });
-    }
+  } catch (err) {
+    console.error("Cashfree Order Error:", err.response?.data || err.message);
+    res.status(500).json({ error: "Order creation failed" });
+  }
 };
 
 // ----------------------
 // Verify Payment and Register Player
 // ----------------------
 export const verifyPaymentAndRegister = async (req, res) => {
-    const { orderId } = req.params;
+  const { orderId } = req.params;
 
-    try {
-        // -----------------------------
-        // 1️⃣ VERIFY PAYMENT IN CASHFREE
-        // -----------------------------
-        const response = await axios.get(`${baseUrl}/orders/${orderId}`, {
-            headers: {
-                "x-api-version": "2022-09-01",
-                "x-client-id": appId,
-                "x-client-secret": secretKey,
-            },
-        });
+  try {
+    // -----------------------------
+    // 1️⃣ VERIFY PAYMENT IN CASHFREE
+    // -----------------------------
+    const response = await axios.get(`${baseUrl}/orders/${orderId}`, {
+      headers: {
+        "x-api-version": "2022-09-01",
+        "x-client-id": appId,
+        "x-client-secret": secretKey,
+      },
+    });
 
-        const order = response.data;
+    const order = response.data;
 
-        if (order.order_status !== "PAID") {
-            return res.json({
-                success: false,
-                message: "Payment not completed",
-            });
-        }
+    if (order.order_status !== "PAID") {
+      return res.json({
+        success: false,
+        message: "Payment not completed",
+      });
+    }
 
-        const email = order.customer_details?.customer_email;
-        if (!email) {
-            return res.status(400).json({
-                success: false,
-                message: "Email missing from payment record",
-            });
-        }
+    const email = order.customer_details?.customer_email;
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email missing from payment record",
+      });
+    }
 
-        // -----------------------------
-        // 2️⃣ CHECK IF PLAYER ALREADY REGISTERED
-        // -----------------------------
-        const already = await Player.findOne({ email });
+    // -----------------------------
+    // 2️⃣ CHECK IF PLAYER ALREADY REGISTERED
+    // -----------------------------
+    const already = await Player.findOne({ email });
 
-        if (already) {
-            return res.json({
-                success: true,
-                alreadyRegistered: true,
-                message: "Player already registered",
-                playerId: already._id,
-                player: already,
-            });
-        }
+    if (already) {
+      return res.json({
+        success: true,
+        alreadyRegistered: true,
+        message: "Player already registered",
+        playerId: already._id,
+        player: already,
+      });
+    }
 
-        // -----------------------------
-        // 3️⃣ CREATE NEW PLAYER ENTRY
-        // -----------------------------
-        let playerId;
+    // -----------------------------
+    // 3️⃣ CREATE NEW PLAYER ENTRY
+    // -----------------------------
+    let playerId;
 
-        while (true) {
-            playerId = generatePlayerId();
-            const exists = await Player.findById(playerId);
-            if (!exists) break; // 100% unique ID
-        }
+    while (true) {
+      playerId = generatePlayerId();
+      const exists = await Player.findById(playerId);
+      if (!exists) break; // 100% unique ID
+    }
 
-        const {
-            fullName,
-            mobile,
-            dob,
-            role,
-            state,
-            city,
-            trialsCity,
-            aadharNumber
-        } = req.body; // frontend sends raw player data
+    const {
+      fullName,
+      mobile,
+      dob,
+      role,
+      state,
+      city,
+      trialsCity,
+      aadharNumber
+    } = req.body; // frontend sends raw player data
 
-        const player = await Player.create({
-            _id: playerId,
-            fullName,
-            email,
-            mobile,
-            dob,
-            role,
-            state,
-            city,
-            trialsCity,
-            aadharNumber,
-            paymentVerified: true,
-            paymentOrderId: orderId,
-            paymentAmount: Number(order.order_amount),
-            paymentDate: new Date(),
-        });
+    const player = await Player.create({
+      _id: playerId,
+      fullName,
+      email,
+      mobile,
+      dob,
+      role,
+      state,
+      city,
+      trialsCity,
+      aadharNumber,
+      paymentVerified: true,
+      paymentOrderId: orderId,
+      paymentAmount: Number(order.order_amount),
+      paymentDate: new Date(),
+    });
 
-        // Send Golden Ticket Email
-        await sendEmail(
-            email,
-            "ACPL Cricket League Trials 2025 - Official Registration Confirmation",
-            `
+    // Send Golden Ticket Email
+    await sendEmail(
+      email,
+      "ACPL Cricket League Trials 2025 - Official Registration Confirmation",
+      `
   <div style="font-family: 'Arial', sans-serif; background-color: #f8f9fa; padding: 40px 20px;">
     <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; padding: 40px; box-shadow: 0 2px 10px rgba(0,0,0,0.08);">
 
@@ -297,25 +297,25 @@ export const verifyPaymentAndRegister = async (req, res) => {
     </div>
   </div>
   `
-        );
+    );
 
-        // -----------------------------
-        // 5️⃣ RESPONSE
-        // -----------------------------
-        return res.json({
-            success: true,
-            message: "Player registered successfully",
-            playerId,
-            player,
-        });
+    // -----------------------------
+    // 5️⃣ RESPONSE
+    // -----------------------------
+    return res.json({
+      success: true,
+      message: "Player registered successfully",
+      playerId,
+      player,
+    });
 
-    } catch (error) {
-        console.error("Verification Error:", error.response?.data || error.message);
+  } catch (error) {
+    console.error("Verification Error:", error.response?.data || error.message);
 
-        return res.status(500).json({
-            success: false,
-            message: "Verification failed",
-            error: error.message,
-        });
-    }
+    return res.status(500).json({
+      success: false,
+      message: "Verification failed",
+      error: error.message,
+    });
+  }
 };
